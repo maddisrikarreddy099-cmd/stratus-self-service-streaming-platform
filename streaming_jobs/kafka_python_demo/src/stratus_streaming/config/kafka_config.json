@@ -1,0 +1,6 @@
+{
+  "bootstrap_servers": "localhost:9092",
+  "topic": "test-topic",
+  "consumer_group": "stratus-consumer-group",
+  "auto_offset_reset": "earliest"
+}
