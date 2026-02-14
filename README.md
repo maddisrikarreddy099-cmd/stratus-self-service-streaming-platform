@@ -6,13 +6,14 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Event--Driven-green)
 ![Platform](https://img.shields.io/badge/Data%20Platform-Self%20Service-purple)
 
-A modular, cloud-native streaming platform enabling teams to onboard real-time data pipelines with built-in governance, observability, and lakehouse integration.
+A modular, cloud-native streaming data platform enabling teams to onboard real-time pipelines with built-in governance, observability, and lakehouse readiness.
 
-Stratus abstracts streaming infrastructure so application teams only focus on producing events — the platform handles ingestion, processing, monitoring, reliability, and extensibility.
+Stratus abstracts streaming infrastructure so application teams only produce events —  
+the platform handles ingestion, processing, monitoring, reliability, and extensibility.
 
 ---
 
-## 🌸 Platform Vision
+## 🧠 Platform Vision
 
 Modern organizations struggle with:
 
@@ -22,9 +23,9 @@ Modern organizations struggle with:
 - No observability
 - Tight coupling between producers & consumers
 
-Stratus introduces a *self-service streaming platform* model:
+Stratus introduces a *self-service streaming platform*:
 
-Teams publish events → Platform guarantees delivery, monitoring, schema discipline, and processing reliability.
+> Teams publish events → Platform guarantees delivery, monitoring, schema discipline, and reliability
 
 ---
 
@@ -40,55 +41,59 @@ Stratus follows an event-driven architecture:
 
 ---
 
-## 📊 Platform Architecture Diagram
+## 📊 System Architecture Diagram
 
-mermaid
-flowchart LR
 
-A[Applications / Services] -->|Publish Events| B(Kafka Topics)
-
-B --> C[Consumer Groups]
-C --> D[Processor Layer - Enrichment & Validation]
-
-D --> E[(Lakehouse Storage)]
-D --> F[(Analytics / BI)]
-D --> G[(ML Feature Store)]
-
-subgraph Platform Services
-H[Observability - Metrics & Logs]
-I[Schema Governance]
-J[Dead Letter Queue]
-end
-
-C --> H
-D --> H
-B --> I
-D --> J
+           ┌──────────────┐
+           │ Data Sources │
+           │ Apps / APIs  │
+           └──────┬───────┘
+                  │
+                  ▼
+        ┌────────────────────┐
+        │   Kafka Cluster     │
+        │  Event Backbone     │
+        └──────┬───────┬─────┘
+               │       │
+       ┌───────▼──┐  ┌▼────────┐
+       │ Consumers │  │Processors│
+       │ Validation│  │Transform │
+       └───────┬──┘  └────┬─────┘
+               │            │
+               ▼            ▼
+        ┌────────────────────────┐
+        │ Observability Layer     │
+        │ Logs • Metrics • Health │
+        └──────────┬─────────────┘
+                   ▼
+        ┌────────────────────────┐
+        │ Lakehouse / Warehouse   │
+        │ Analytics Consumption   │
+        └────────────────────────┘
 
 
 ---
 
 ## 🔄 Data Flow
 
-1. Producers publish events to Kafka topics
-2. Consumer groups process events independently
-3. Processor layer performs transformation & enrichment
-4. Metrics and logs emitted to observability layer
-5. Data prepared for downstream analytics or lakehouse storage
+1. Producers publish events to Kafka topics  
+2. Consumer groups process events independently  
+3. Processor layer performs transformations & enrichment  
+4. Metrics and logs emitted to observability layer  
+5. Data prepared for downstream analytics or storage
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
 
 
-consumer/        Event consumers
-producer/        Event producers
-processor/       Transformation layer
-streaming_jobs/  Streaming job framework
-docker/          Infrastructure services
-observability/   Metrics & logging configs
-control_plane/   (future) platform coordination
-docs/            Architecture & documentation
+producer/           Event producers
+consumer/           Event consumers
+processor/          Transformation layer
+streaming_jobs/     Streaming job framework
+docker/             Infrastructure services
+observability/      Metrics & logging configs
+control_plane/      Platform coordination (future)
 
 
 ---
@@ -121,19 +126,18 @@ python processor/processor.py
 
 ---
 
-## 📈 Observability
+## 🔍 Observability
 
-The platform is built *observability-first*
+The platform is observability-first:
 
 - Structured logging
 - Prometheus metrics export
 - Health endpoints
-- Centralized log aggregation ready
-- Consumer lag monitoring ready
+- Centralized monitoring readiness
 
 ---
 
-## 🧠 Engineering Principles
+## 🧩 Engineering Principles
 
 - Event-driven architecture
 - Idempotent processing
@@ -148,7 +152,7 @@ The platform is built *observability-first*
 - Python
 - Apache Kafka
 - Docker
-- Structured Streaming Concepts
+- Streaming processing concepts
 - Lakehouse-ready design
 
 ---
@@ -156,7 +160,7 @@ The platform is built *observability-first*
 ## 🗺️ Future Roadmap
 
 - Schema Registry integration
-- Dead letter queues
+- Dead-letter queues
 - Data quality checks
 - Stream lineage tracking
 - UI onboarding portal
@@ -164,18 +168,16 @@ The platform is built *observability-first*
 
 ---
 
-## 👤 Author
+## ✨ Why This Project Matters
 
-Designed as a learning + production-style data platform architecture project demonstrating real-world streaming platform patterns.
+This project demonstrates how companies move from:
 
----
-
-## ⭐ Why This Project Matters
-
-This project demonstrates how a company moves from:
-
-*Script-based pipelines → Platform-based data infrastructure*
+> Script-based pipelines → Platform-based data infrastructure
 
 Instead of every team building pipelines, they onboard onto a shared data platform.
 
 ---
+
+## 👨‍💻 Author
+
+Designed as a learning + production-style data platform architecture project demonstrating real-world streaming platform patterns.
