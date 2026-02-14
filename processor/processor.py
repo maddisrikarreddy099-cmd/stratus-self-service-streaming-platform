@@ -1,63 +1,42 @@
 from confluent_kafka import Consumer, Producer
 import json
 import time
-from prometheus_client import Counter, start_http_server
+
+from observability.metrics import message_counter, error_counter
+from observability.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 BOOTSTRAP = "localhost:29092"
-
-RAW_TOPIC = "stratus.events.raw"
-ENRICHED_TOPIC = "stratus.events.enriched"
-DLQ_TOPIC = "stratus.events.dlq"
-
-# ✅ Prometheus Metrics
-events_processed_total = Counter(
-    "events_processed_total",
-    "Total successfully processed events"
-)
-
-events_failed_total = Counter(
-    "events_failed_total",
-    "Total failed events sent to DLQ"
-)
-
-required_fields = ["event_id", "user_id", "event_type", "timestamp"]
-
-def validate_event(event: dict):
-    # Example: force failures for testing DLQ
-    if event.get("event_type") == "logout":
-        raise ValueError("Forced failure for DLQ testing")
-
-    for field in required_fields:
-        if field not in event:
-            raise ValueError(f"Missing required field: {field}")
-
-    if event["event_type"] not in ["click", "purchase", "login", "logout"]:
-        raise ValueError("Invalid event_type")
-
-
-def enrich_event(event: dict):
-    event["processed_ts"] = int(time.time() * 1000)
-    event["pipeline"] = "stratus-core"
-    return event
-
+INPUT_TOPIC = "stratus.events.raw"
+OUTPUT_TOPIC = "stratus.events.processed"
+GROUP_ID = "stratus-processor-group"
 
 consumer_conf = {
     "bootstrap.servers": BOOTSTRAP,
-    "group.id": "stratus-processor-group",
-    "auto.offset.reset": "earliest",
+    "group.id": GROUP_ID,
+    "auto.offset.reset": "earliest"
 }
 
-producer_conf = {"bootstrap.servers": BOOTSTRAP}
+producer_conf = {
+    "bootstrap.servers": BOOTSTRAP
+}
 
 consumer = Consumer(consumer_conf)
 producer = Producer(producer_conf)
 
-consumer.subscribe([RAW_TOPIC])
+consumer.subscribe([INPUT_TOPIC])
 
-# ✅ Start Prometheus HTTP endpoint
-start_http_server(8001)
-print("📊 Metrics running at http://localhost:8001")
-print("⚙️ Processor started...")
+logger.info("Processor service started")
+
+def delivery_report(err, msg):
+    if err is not None:
+        logger.error(f"Delivery failed: {err}")
+        error_counter.inc()
+    else:
+        logger.info(
+            f"Message delivered to {msg.topic()} [{msg.partition()}]"
+        )
 
 try:
     while True:
@@ -67,43 +46,34 @@ try:
             continue
 
         if msg.error():
-            print("Consumer error:", msg.error())
+            logger.error(f"Consumer error: {msg.error()}")
+            error_counter.inc()
             continue
 
-        raw_value = msg.value().decode("utf-8")
-
         try:
-            event = json.loads(raw_value)
+            event = json.loads(msg.value().decode("utf-8"))
 
-            validate_event(event)
-            enriched = enrich_event(event)
+            # Simulated transformation
+            event["processed"] = True
+            event["processed_at"] = int(time.time() * 1000)
 
             producer.produce(
-                ENRICHED_TOPIC,
-                key=msg.key(),
-                value=json.dumps(enriched)
+                OUTPUT_TOPIC,
+                key=event.get("event_id"),
+                value=json.dumps(event),
+                callback=delivery_report
             )
+
             producer.poll(0)
 
-            events_processed_total.inc()
-            print(f"✅ Processed event {event['event_id']}")
+            message_counter.inc()
 
-        except Exception as e:
-            print(f"❌ Processing failed: {e}")
-
-            # Send original raw payload to DLQ
-            producer.produce(
-                DLQ_TOPIC,
-                key=msg.key(),
-                value=raw_value
-            )
-            producer.poll(0)
-
-            events_failed_total.inc()
-            print("⚠️ Sent event to DLQ")
+        except Exception:
+            logger.exception("Processing failure")
+            error_counter.inc()
 
 except KeyboardInterrupt:
-    print("Shutting down processor...")
+    logger.info("Processor shutting down")
 
 finally:
     consumer.close()

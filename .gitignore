@@ -4,9 +4,16 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Environment files
+# Virtual env
+venv/
 .env
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# VSCode
+.vscode/
+
+# Docker
+*.log
